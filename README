@@ -1,4 +1,4 @@
-Filter/Include version 1.2
+Filter/Include version 1.4
 ==========================
 
 Simple filter to emulate #include from C<C>. That is, the source of a given file
@@ -20,6 +20,7 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
+  Module::Locate
   Regexp::Common
   Test::More
 

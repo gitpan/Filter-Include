@@ -5,7 +5,6 @@ MANIFEST
 README
 META.yml
 t/01basic.t
-t/02funcs.t
 t/03include.t
 t/04include_withhash.t
 t/05recurse_include.t

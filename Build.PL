@@ -5,8 +5,9 @@ Module::Build->new(
   license     => 'perl',
 
   requires    => {
-             'perl'           => '5.6.1',
-             'Regexp::Common' => '>= 0.01',
-             'Filter::Simple' => '>= 0.70',
+    'perl'           => '5.6.1',
+    'Regexp::Common' => '>= 0.01',
+    'Filter::Simple' => '>= 0.70',
+    'Module::Locate' => '>= 0.1',
   },
 )->create_build_script;

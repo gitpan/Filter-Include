@@ -1,7 +1,7 @@
 {
   package Filter::Include;
 
-  $VERSION  = 1.3;
+  $VERSION  = 1.4;
 
   use strict;
   use warnings;
@@ -10,6 +10,7 @@
   use Regexp::Common;
   use Carp 'croak';
   use File::Spec::Functions 'catfile';
+  use Module::Locate qw/ acts_like_fh locate /;
   
   use Filter::Simple;
 
@@ -21,12 +22,18 @@
   sub _filter {
     local $_ = shift;
 
-    s{$MATCH_RE}(get_source($1))ge;
+    s{$MATCH_RE}(source($1))ge;
 
-    $_;
+    my($i, $line) = 0;
+    $line = ( caller $i++ )[2]
+      while caller $i;
+
+    return "\n#line $line\n"
+         . $_
+         . "\n#line " . ( $line + tr[\n][\n] ) . "\n";
   }
 
-  sub get_source {
+  sub source {
     local $_ = shift;
 
     return "" unless defined;
@@ -38,81 +45,23 @@
         if $@;
       $INC{$f} = $f;
     } else {
-      $f = find_module_file($_);
+      $f = locate($_);
     }
 
-    my $fh = ( _isfh($f) ?
+    my $fh = ( acts_like_fh($f) ?
       $f
     :
       do { my $tmp = IO::File->new($f)
              or croak("Filter::Include - $! [$f]"); $tmp }
     );
 
-    my $data = do { local $/; join '', $fh->getlines };
+    my $data = do { local $/; <$fh> };
     
     $data = _filter($data)
       if $data =~ $MATCH_RE;
 
     return $data;
   }
-
-  use vars '%INC';
-  sub find_module_file {
-    my $pkg = $_[0];
-  
-    my($file, @dirs) = reverse split '::' => $pkg;
-    my $path = catfile reverse(@dirs), "$file.pm";
-  
-    return $INC{$path}
-      if exists $INC{$path} and defined $INC{$path};
-
-    my $lib;
-
-    for(@INC) {
-      ## do references in @INC magic here ...
-      if(ref $_) {
-        my $ret = ( ref($_) eq 'CODE' ?
-          $_->( $_, $path )
-        :
-          ref($_) eq 'ARRAY' ?
-            $_->[0]->( $_, $path )
-          :
-            UNIVERSAL::can($_, 'INC') ?
-              $_->INC( $path )
-            :
-              croak("Filter::Include - invalid reference $_")
-        ) ;
-          
-        next
-          unless defined $ret;
-        
-        croak("Filter::Handle - invalid \@INC subroutine return $ret")
-          unless _isfh($ret);
-
-        return $ret;
-      }
-
-      $lib = $_ and last
-        if -f catfile($_, $path);
-      
-    }
-    
-    croak("Filter::Include - Can't locate $path in \@INC"
-          . "(\@INC contains: @INC")
-      unless defined $lib;
-    
-    $INC{$path} = catfile $lib, $path;
-  }
-
-  sub _isfh {
-    no strict 'refs';
-    return !!( ref $_[0] and (
-         ( ref $_[0] eq 'GLOB' and defined *{$_[0]}{IO} )
-      or ( UNIVERSAL::isa($_[0] => 'IO::Handle')        )
-      or ( UNIVERSAL::can($_[0] => 'getlines')          )
-    ) );
-  }
-               
 
 }
 
@@ -177,6 +126,38 @@ it is in all its filtering glory.
 
 =over 4
 
+=item 1.4
+
+=over 8
+
+=item *
+
+Moved out the functionality for locating modules to L<Module::Locate>.
+
+=item *
+
+Thanks to the tip off from an Anonymous Monk at
+
+L<http://www.perlmonks.org/index.pl?node_id=302235|Re: Re: #include files>
+
+the line numbering is now set accordingly.
+
+=back
+
+=item 1.3
+
+=over 8
+
+=item *
+
+recursively processes the 'include' directive
+
+=item *
+
+moved over to Module::Build, hurrah!
+
+=back
+
 =item 1.2
 
 =over 8
@@ -213,7 +194,13 @@ Added I<Changes> section in POD
 
 =item 0.1
 
+=over 8
+
+=item *
+
 Initial release
+
+=back
 
 =back
 
