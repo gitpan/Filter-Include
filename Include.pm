@@ -1,7 +1,7 @@
 {
   package Filter::Include;
 
-  $VERSION = 0.1;
+  $VERSION = 1.1;
 
   use strict;
   use warnings;
@@ -33,7 +33,7 @@
       $f = find_module_file($_);
     }
 
-    my $fh = ( ( ref $f and UNIVERSAL::isa($f => 'IO::Handle') ) ?
+    my $fh = ( _isfh($f) ?
       $f
     :
       do { my $tmp = IO::File->new($f)
@@ -63,7 +63,7 @@
           $_->( $_, $path )
         :
           ref($_) eq 'ARRAY' ?
-            $_[0]->( $_, $path )
+            $_->[0]->( $_, $path )
           :
             UNIVERSAL::can($_, 'INC') ?
               $_->INC( $path )
@@ -75,7 +75,7 @@
           unless defined $ret;
         
         croak("Filter::Handle - invalid \@INC subroutine return $ret")
-          if ref $ret and not(UNIVERSAL::isa($ret => 'IO::Handle'));
+          unless _isfh($ret);
 
         return $ret;
       }
@@ -92,7 +92,15 @@
     $INC{$path} = catfile $lib, $path;
   }
 
-
+  sub _isfh {
+    no strict 'refs';
+    return !!( ref $_[0] and (
+         ( ref $_[0] eq 'GLOB' and defined *{$_[0]}{IO} )
+      or ( UNIVERSAL::isa($_[0] => 'IO::Handle')        )
+      or ( UNIVERSAL::can($_[0] => 'can')               )
+    ) );
+  }
+               
 
 }
 
@@ -153,6 +161,21 @@ it is in all its filtering glory.
 
 =back
 
+=head1 Changes
+
+=over 4
+
+=item 1.1
+
+Upgraded to a more respectable version number and added a more robust check for
+the existence of a filehandle. Added tests for the coderef-type magic in C<@INC>
+when performing a bareword include. Added I<Changes> section in POD.
+
+=item 0.1
+
+Initial release.
+
+=back
 
 =head1 AUTHOR
 
