@@ -1,0 +1,31 @@
+Filter/Include version 0.1
+==========================
+
+Simple filter to emulate #include from C<C>. That is, the source of a given file
+is dumped right directly into where the #include was, sort of like a brutish
+C<require>. This is relatively stable, and if you're comfortable with source
+filtering then it should be ready to put in production code.
+
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  Regexp::Common
+  Test::More
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2003 Dan Brook
+
+This code is distributed under the same copyright terms as Perl itself.
+
