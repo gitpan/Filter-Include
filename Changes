@@ -1,6 +1,21 @@
 Revision history for Perl extension Filter::Include.
 
+1.2 Mon Aug  4 12:19:12 BST 2003
+
+  * Fixed 2 bugs - forgot to "reverse" "@dirs" in "find_module_file" and
+    "_isfh" now checks if an object can "getlines" (not "can" which is silly).
+
+1.1 Wed Jul 30 16:15:55 BST 2003
+
+  * Upgraded to a more respectable version number and added a more robust check
+    for the existence of a filehandle.
+  * Added tests for the coderef-type magic in @INC when performing a bareword
+    include.
+  * Added Changes section in POD.
+
+
 0.1  Tue Jul 29 09:40:55 2003
-	- original version; created by h2xs 1.21 with options
-		-AX -v 0.1 Filter::Include
+    * original version; created by h2xs 1.21 with options
+      -AX -v 0.1 Filter::Include
+    * Initial release.
 

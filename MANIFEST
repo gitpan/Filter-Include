@@ -4,3 +4,10 @@ Makefile.PL
 MANIFEST
 README
 test.pl
+t/01basic.t
+t/sample.pl
+t/sample_test.pm
+t/02funcs.t
+t/03include.t
+t/04include_withhash.t
+t/sample_coderefs.pm

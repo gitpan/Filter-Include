@@ -1,7 +1,7 @@
 {
   package Filter::Include;
 
-  $VERSION = 1.1;
+  $VERSION = 1.2;
 
   use strict;
   use warnings;
@@ -49,7 +49,7 @@
     my $pkg = $_[0];
   
     my($file, @dirs) = reverse split '::' => $pkg;
-    my $path = catfile @dirs, "$file.pm";
+    my $path = catfile reverse(@dirs), "$file.pm";
   
     return $INC{$path}
       if exists $INC{$path} and defined $INC{$path};
@@ -97,7 +97,7 @@
     return !!( ref $_[0] and (
          ( ref $_[0] eq 'GLOB' and defined *{$_[0]}{IO} )
       or ( UNIVERSAL::isa($_[0] => 'IO::Handle')        )
-      or ( UNIVERSAL::can($_[0] => 'can')               )
+      or ( UNIVERSAL::can($_[0] => 'getlines')          )
     ) );
   }
                
@@ -165,15 +165,43 @@ it is in all its filtering glory.
 
 =over 4
 
+=item 1.2
+
+=over 8
+
+=item *
+
+Fixed 2 bugs - forgot to C<reverse> C<@dirs> in C<find_module_file> and
+C<_isfh> now checks if an object can C<getlines> (not C<can> which is silly).
+
+=back
+
 =item 1.1
 
-Upgraded to a more respectable version number and added a more robust check for
-the existence of a filehandle. Added tests for the coderef-type magic in C<@INC>
-when performing a bareword include. Added I<Changes> section in POD.
+=over 8
+
+=item *
+
+Upgraded to a more respectable version number
+
+=item * 
+
+Added a more robust check for the existence of a filehandle
+
+=item *
+
+Added tests for the coderef-type magic in C<@INC> when performing a bareword
+include.
+
+=item *
+
+Added I<Changes> section in POD
+
+=back
 
 =item 0.1
 
-Initial release.
+Initial release
 
 =back
 

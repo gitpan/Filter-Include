@@ -1,4 +1,4 @@
-Filter/Include version 1.1
+Filter/Include version 1.2
 ==========================
 
 Simple filter to emulate #include from C<C>. That is, the source of a given file
