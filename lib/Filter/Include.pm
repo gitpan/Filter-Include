@@ -1,7 +1,7 @@
 {
   package Filter::Include;
 
-  $VERSION = 1.2;
+  $VERSION  = 1.3;
 
   use strict;
   use warnings;
@@ -13,10 +13,18 @@
   
   use Filter::Simple;
 
-  FILTER {
-    s{ ^ \043 ? \s* include \s+ (.+?) ;? $ }
-     ( get_source($1) )gemx;
-  };
+  FILTER { $_ = _filter($_) };
+
+  use vars '$MATCH_RE';
+  $MATCH_RE = qr{ ^ \043 ? \s* include \s+ (.+?) ;? $ }xm;
+
+  sub _filter {
+    local $_ = shift;
+
+    s{$MATCH_RE}(get_source($1))ge;
+
+    $_;
+  }
 
   sub get_source {
     local $_ = shift;
@@ -40,8 +48,12 @@
              or croak("Filter::Include - $! [$f]"); $tmp }
     );
 
-    local $/;
-    return join '', $fh->getlines;
+    my $data = do { local $/; join '', $fh->getlines };
+    
+    $data = _filter($data)
+      if $data =~ $MATCH_RE;
+
+    return $data;
   }
 
   use vars '%INC';

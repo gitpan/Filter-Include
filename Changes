@@ -1,5 +1,9 @@
 Revision history for Perl extension Filter::Include.
 
+1.3 Fri Sep  5 16:15:09 BST 2003
+  * recursively processes the 'include' directive
+  * moved over to Module::Build, hurrah!
+
 1.2 Mon Aug  4 12:19:12 BST 2003
 
   * Fixed 2 bugs - forgot to "reverse" "@dirs" in "find_module_file" and
