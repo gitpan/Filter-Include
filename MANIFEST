@@ -1,14 +1,15 @@
 Changes
 lib/Filter/Include.pm
-Build.PL
+Makefile.PL
 MANIFEST
 README
-META.yml
 t/01basic.t
 t/03include.t
 t/04include_withhash.t
 t/05recurse_include.t
+t/06_handlers.t
 t/sample_coderefs.pm
 t/sample.pl
 t/sample_recurse.pl
 t/sample_test.pm
+META.yml                                 Module meta-data (added by MakeMaker)

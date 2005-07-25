@@ -1,32 +1,34 @@
-Filter/Include version 1.4
+Filter/Include version 1.5
 ==========================
 
-Simple filter to emulate #include from C<C>. That is, the source of a given file
-is dumped right directly into where the #include was, sort of like a brutish
-C<require>. This is relatively stable, and if you're comfortable with source
-filtering then it should be ready to put in production code.
-
+Take the "#include" preproccesor directive from "C", stir in some "perl"
+semantics and we have this module. Only one keyword is used, "include",
+which is really just a processor directive for the filter, which
+indicates the file to be included. The argument supplied to "include"
+will be handled like it would by "require" and "use" so @INC is searched
+accordingly and %INC is populated.
 
 INSTALLATION
 
 To install this module type the following:
 
-   perl Build.PL
-   ./Build
-   ./Build test
-   ./Build install
+   perl Makefile.PL
+   make
+   make test
+   make install
 
 DEPENDENCIES
 
 This module requires these other modules and libraries:
 
+  Filter::Simple
   Module::Locate
-  Regexp::Common
-  Test::More
+  Scalar::Util
+  Test::More - only required for testing
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2003 Dan Brook
+Copyright (C) 2005 Dan Brook
 
 This code is distributed under the same copyright terms as Perl itself.
 

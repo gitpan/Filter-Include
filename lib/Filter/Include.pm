@@ -1,67 +1,107 @@
 {
   package Filter::Include;
 
-  $VERSION  = 1.4;
+  $VERSION  = '1.5';
 
   use strict;
-  use warnings;
+  # XXX - this is dropped for the sake of pre-5.6 perls
+  # use warnings;
 
-  use IO::File;
-  use Regexp::Common;
   use Carp 'croak';
+  use Scalar::Util 'reftype';
   use File::Spec::Functions 'catfile';
-  use Module::Locate qw/ acts_like_fh locate /;
-  
-  use Filter::Simple;
-
-  FILTER { $_ = _filter($_) };
+  use Module::Locate Global => 1, 'get_source';
 
   use vars '$MATCH_RE';
   $MATCH_RE = qr{ ^ \043 ? \s* include \s+ (.+?) ;? $ }xm;
 
+  sub import {
+    my( $called_by, %args ) = @_;
+
+    for(grep exists $args{$_}, qw/ pre post /) {
+      my $handler = $_ . '_expand';
+
+      croak "The $handler handler must be a CODE reference, was given: " .
+            ref($args{$_}) || $args{$_}
+        if !ref $args{$_} or reftype $args{$_} ne 'CODE';
+
+      no strict 'refs';
+      *$handler = delete $args{$_};
+    }
+  }
+
+  use vars '$LINE';
   sub _filter {
     local $_ = shift;
 
-    s{$MATCH_RE}(source($1))ge;
+    s{$MATCH_RE}{
+      my $include = $1;
+      
+      ## Only do this the first time.
+      $LINE = _find_initial_lineno($_, $&)
+        unless defined $LINE;
+      
+      _source($include);
+    }ge;
 
-    my($i, $line) = 0;
-    $line = ( caller $i++ )[2]
-      while caller $i;
-
-    return "\n#line $line\n"
-         . $_
-         . "\n#line " . ( $line + tr[\n][\n] ) . "\n";
+    return $_
+         . "\n#line " . ( $LINE += tr[\n][\n] + 1 ) . "\n";
   }
 
-  sub source {
+  ## work magic to find the first line number so #line declarations are correct
+  sub _find_initial_lineno {
+    my($src, $match) = @_;
+    
+    ## Find the number of lines before the $match in $src.
+    my $include_at = () = substr($src, 0, index($src, $match)) =~ /^(.?)/mg;
+
+    my($i, $called_from) = 0;
+    $called_from = ( caller $i++ )[2]
+      while caller $i;
+
+    ## We need the caller's line num in addition to the number of lines before
+    ## the match substring as Filter::Simple only filters after it is called.
+    return $include_at + $called_from;
+  }
+  
+  sub _source {
     local $_ = shift;
 
-    return "" unless defined;
+    return ''
+      unless defined;
 
-    my $f;
-    if(/^[q'"]/) {
-      $f = eval;
-      croak("Filter::Include - invalid quoted string $f: $@")
-        if $@;
-      $INC{$f} = $f;
-    } else {
-      $f = locate($_);
-    }
+    my $include;
+    my $data = do {
+      local $@;
+      $include = $_ =~ $Module::Locate::PkgRe ? $_ : eval $_;
+      croak("Filter::Include - couldn't get a meaningful filename from: '$_'")
+        if not defined $include or $@;
+        
+      get_source( $include );
+    };
 
-    my $fh = ( acts_like_fh($f) ?
-      $f
-    :
-      do { my $tmp = IO::File->new($f)
-             or croak("Filter::Include - $! [$f]"); $tmp }
-    );
-
-    my $data = do { local $/; <$fh> };
-    
-    $data = _filter($data)
-      if $data =~ $MATCH_RE;
+    $data = _expand_source($include, $data);
 
     return $data;
   }
+
+  sub _expand_source {
+    my($include, $data) = @_;
+
+    pre_expand( $include, $data )
+      if defined &pre_expand;
+
+    $data = _filter($data)
+      if $data =~ $MATCH_RE;
+
+    post_expand( $include, $data )
+      if defined &post_expand;
+
+    return $data;
+  }
+  
+  use Filter::Simple;
+  FILTER { $_ = _filter($_) };
 
 }
 
@@ -73,7 +113,7 @@ __END__
 
 =head1 NAME
 
-Filter::Include - Emulate the behaviour of the C preprocessor's C<#include>
+Filter::Include - Emulate the behaviour of the C<#include> directive
 
 =head1 SYNOPSIS
 
@@ -82,7 +122,7 @@ Filter::Include - Emulate the behaviour of the C preprocessor's C<#include>
   include Foo::Bar;
   include "somefile.pl";
 
-  ## or
+  ## or the C preprocessor directive style:
 
   #include Some::Class
   #include "little/library.pl"
@@ -93,123 +133,63 @@ Take the C<#include> preproccesor directive from C<C>, stir in some C<perl>
 semantics and we have this module. Only one keyword is used, C<include>, which
 is really just a processor directive for the filter, which indicates the file to
 be included. The argument supplied to C<include> will be handled like it would
-by C<require> and C<use> with the traversing of C<@INC> and the populating of
-C<%INC> and the like.
+by C<require> and C<use> so C<@INC> is searched accordingly and C<%INC> is
+populated.
 
 =head1 #include
 
-For those not clued in on what C<C>'s C<#include> processor directive does this
-section shall explain briefly its purpose, and why it's being emulated here.
+For those who have not come across C<C>'s C<#include> preprocessor directive
+this section shall explain briefly what it does, and why it's being emulated here.
 
 =over 4
 
 =item I<What>
 
 When the C<C> preprocessor sees the C<#include> directive, it will include the
-given file straight into the source. It is syntax-checked and dumped where
+given file straight into the source. The file is dumped directly to where
 C<#include> previously stood, so becomes part of the source of the given file
-when it is compiled.
+when it is compiled. This is used primarily for C<C>'s header files so function
+and data predeclarations can be nicely separated out.
 
 =item I<Why>
 
-Basically the 'why' of this module is that I'd seen several requests on Perl
-Monks, the one which really inspired this was
+The I<why> of this module is that I'd seen several requests on
+L<Perl Monks|http:/www.perlmonks.org>, but the one inparticular that inspired
+was this:
 
 L<http://www.perlmonks.org/index.pl?node_id=254283>
 
-So I figured other people that haven't posted to Perl Monks may want it, so here
-it is in all its filtering glory.
-
 =back
 
-=head1 Changes
+=head1 HANDLERS
 
-=over 4
+If C<Filter::Include> is called with the C<pre> and/or C<post> arguments their
+associated values can be installed as handlers e.g
 
-=item 1.4
+  use Filter::Include pre => sub {
+                        my $include = shift;
+                        print "Including $inc\n";
+                      };
 
-=over 8
+This will install the C<pre> handler which is called before the include is
+parsed for further includes. If a C<post> handler is passed in then it will be
+called after the include has been parsed and updated.
 
-=item *
+Both handlers take two positional arguments - the current include e.g
+C<library.pl> or C<Legacy::Code>, and the source of the include which in the
+case of the C<pre> handler is the source before it is parsed and in the case of
+the C<post> handler it is the source after it has been parsed and updated as
+appropriate.
 
-Moved out the functionality for locating modules to L<Module::Locate>.
-
-=item *
-
-Thanks to the tip off from an Anonymous Monk at
-
-L<http://www.perlmonks.org/index.pl?node_id=302235|Re: Re: #include files>
-
-the line numbering is now set accordingly.
-
-=back
-
-=item 1.3
-
-=over 8
-
-=item *
-
-recursively processes the 'include' directive
-
-=item *
-
-moved over to Module::Build, hurrah!
-
-=back
-
-=item 1.2
-
-=over 8
-
-=item *
-
-Fixed 2 bugs - forgot to C<reverse> C<@dirs> in C<find_module_file> and
-C<_isfh> now checks if an object can C<getlines> (not C<can> which is silly).
-
-=back
-
-=item 1.1
-
-=over 8
-
-=item *
-
-Upgraded to a more respectable version number
-
-=item * 
-
-Added a more robust check for the existence of a filehandle
-
-=item *
-
-Added tests for the coderef-type magic in C<@INC> when performing a bareword
-include.
-
-=item *
-
-Added I<Changes> section in POD
-
-=back
-
-=item 0.1
-
-=over 8
-
-=item *
-
-Initial release
-
-=back
-
-=back
+These handlers are going to be most handy for debugging purposes but could also
+be useful for tracking module usage.
 
 =head1 AUTHOR
 
-Dan Brook C<E<lt>broquaint@hotmail.comE<gt>>
+Dan Brook C<< <cpan@broquaint.com> >>
 
 =head1 SEE ALSO
 
-C<C>, -P in L<perlrun>, L<Filter::Simple>
+C<C>, -P in L<perlrun>, L<Filter::Simple>, L<Filter::Macro>
 
 =cut

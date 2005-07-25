@@ -1,18 +1,13 @@
---- #YAML:1.0
-name: Filter-Include
-version: 1.4
-license: perl
-distribution_type: module
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         Filter-Include
+version:      1.5
+version_from: lib/Filter/Include.pm
+installdirs:  site
 requires:
-  Filter::Simple: '>= 0.70'
-  Module::Locate: '>= 0.1'
-  Regexp::Common: '>= 0.01'
-  perl: 5.6.1
-recommends: {}
-build_requires: {}
-conflicts: {}
-provides:
-  Filter::Include:
-    file: lib/Filter/Include.pm
-    version: 1.4
-generated_by: Module::Build version 0.19
+    Filter::Simple:                0.70
+    Module::Locate:                1.7
+    Scalar::Util:                  1.01
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17

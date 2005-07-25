@@ -1,7 +1,16 @@
 Revision history for Perl extension Filter::Include.
 
+1.5 Fri Jul 15 15:46:32 GMT 2005
+  * Dropped Regexp::Common dependency, but added Scalar::Util dependency
+  * Dropped Changes from POD
+  * Fixed bug where line numbers weren't set correctly with includes within
+    includes
+  * Now uses ExtUtils::MakeMaker instead of Module::Build
+  * Added pre/post source inclusion handlers
+  * Tidied up and refactored source
+
 1.4 Mon Sep 22 17:24:20 BST 2003
-  * Moved out the functionality for locating modules to L<Module::Locate>.
+  * Moved out the functionality for locating modules to Module::Locate.
   * Thanks to the tip off[0] from an Anonymous Monk at the line numbering is now
     set accordingly.
 

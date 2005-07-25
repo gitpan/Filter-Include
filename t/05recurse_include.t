@@ -1,7 +1,4 @@
-
-#!/usr/bin/perl
-
-use Test::More tests => 4;
+use Test::More tests => 5;
 use vars '$pkg';
 
 use IO::File;
@@ -14,5 +11,8 @@ use Filter::Include;
 #include 't/sample_recurse.pl';
 
 # no. 3, 4
-ok($::sample_test    eq 'a string',      '$::sample_test is set');
-ok($::sample_recurse eq 'I am a string', '$::sample_recurse is set');
+is($::sample_test,    'a string',      '$::sample_test is set');
+is($::sample_recurse, 'I am a string', '$::sample_recurse is set');
+
+# no. 5
+is(__LINE__, 28, "Line numbers incremented correctly");
