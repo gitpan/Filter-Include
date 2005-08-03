@@ -1,12 +1,12 @@
-Filter/Include version 1.5
+Filter/Include version 1.6
 ==========================
 
 Take the "#include" preproccesor directive from "C", stir in some "perl"
 semantics and we have this module. Only one keyword is used, "include",
-which is really just a processor directive for the filter, which
-indicates the file to be included. The argument supplied to "include"
-will be handled like it would by "require" and "use" so @INC is searched
-accordingly and %INC is populated.
+which is really just a processor directive for the filter, which indicates
+the file to be included. The argument supplied to "include" will be handled
+like it would by "require" and "use" so @INC is searched accordingly and
+%INC is populated.
 
 INSTALLATION
 
@@ -31,4 +31,3 @@ COPYRIGHT AND LICENCE
 Copyright (C) 2005 Dan Brook
 
 This code is distributed under the same copyright terms as Perl itself.
-

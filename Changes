@@ -1,5 +1,10 @@
 Revision history for Perl extension Filter::Include.
 
+1.6 Wed Aug  3 10:24:14 BST 2005
+  * Added before/after handlers.
+  * Attempted to clarify docs to address Robert Rothenburg's criticisms in his
+    review: http://cpanratings.perl.org/dist/Filter-Include.
+
 1.5 Fri Jul 15 15:46:32 GMT 2005
   * Dropped Regexp::Common dependency, but added Scalar::Util dependency
   * Dropped Changes from POD
@@ -30,10 +35,3 @@ Revision history for Perl extension Filter::Include.
   * Added tests for the coderef-type magic in @INC when performing a bareword
     include.
   * Added Changes section in POD.
-
-
-0.1  Tue Jul 29 09:40:55 2003
-    * original version; created by h2xs 1.21 with options
-      -AX -v 0.1 Filter::Include
-    * Initial release.
-
